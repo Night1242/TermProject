@@ -62,6 +62,9 @@ def onKeyPress(app, key):
     if key=='r':
         app.dex= str(random.randrange(1, 368))
         app.pokemon=pypokedex.get(dex=(int(app.dex)))
+    if key=='b':
+        app.dex="258"
+        app.pokemon=pypokedex.get(dex=(int(app.dex)))
 
 def main():
     runApp()
