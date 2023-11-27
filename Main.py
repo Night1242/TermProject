@@ -9,7 +9,39 @@ def onAppStart(app):
     app.width=720
     app.height=480
     movesList(app)
-    Battle(app)
+    trainers(app)
+    app.start=True
+    app.start1=False
+    app.start2=False
+    app.battle=False
+    app.gender=0
+    app.name=None
+
+def Start(app):
+    introBackground=CMUImage(Image.open('Intro.png'))
+    drawImage(introBackground, 0,0, align='center')
+    drawLabel('Pokemon 112', app.width/2, 200,align='center',size=75, fill='Green' , font='orbitron')
+    drawLabel('Press Enter to Start', app.width/2, 285, align='center',size=30, fill='White' , font='orbitron')
+
+def Start1(app):
+    girl=CMUImage(Image.open('girl.png'))
+    boy=CMUImage(Image.open('boy.png'))
+    if app.gender%2==0:
+        drawImage(boy, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
+    if app.gender%2==1:
+        drawImage(girl, app.width/2,app.height/2,height=app.height, width= app.width+45,align='center')
+
+def Start2(app):
+    if app.gender=="Male":
+        boy=CMUImage(Image.open('boy1.png'))
+        drawImage(boy, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
+    if app.gender=="Female":
+        girl=CMUImage(Image.open('girl1.png'))
+        drawImage(girl, app.width/2,app.height/2,height=app.height, width= app.width+45,align='center')
+    drawRect(25, 150, 300, 75, fill='white', border='green', borderWidth=10)
+    if app.name!=None:
+        drawLabel(app.name,25, 150, align='Top-Left')
+
 
 def Battle(app):
     trainers(app)
@@ -63,9 +95,16 @@ def fisherman1(app):
     app.fisherman1.addPokemon(pokemon2)
 
 def redrawAll(app):
-    Background(app)
+    if app.battle==True:
+        battleBackground(app)
+    if app.start==True:
+        Start(app)
+    if app.start1==True:
+        Start1(app)
+    if app.start2==True:
+        Start2(app)
 
-def Background(app):
+def battleBackground(app):
     if app.Lose==False and app.Win==False:
         name=str(app.player.pokemon[0])
         pokemonUs=pypokedex.get(name=name)
@@ -147,117 +186,137 @@ def Background(app):
 
 
 def onKeyPress(app, key):
-    if app.battleMain==True:
-        if key=='left':
-            if app.battleArrowX != 387:
-                app.battleArrowX-=170
-        if key=='right':
-            if app.battleArrowX != 557:
-                app.battleArrowX+=170
-        if key=='up':
-            if app.battleArrowY != 385:
-                app.battleArrowY-=50
-        if key=='down':
-            if app.battleArrowY != 435:
-                app.battleArrowY+=50
-        if key=='x':
-            if app.battleArrowX==387 and app.battleArrowY == 385:
-                app.battleMain=False
-                app.battleMoves=True
-                app.movesSelected=None
-                app.movesArrowX = 50
-                app.movesArrowY =380
-            
-    elif app.battleMoves==True:
-        if key=='left':
-            if app.movesArrowX != 50:
-                app.movesArrowX-=190
-        if key=='right':
-            if app.movesArrowX != (50+190):
-                app.movesArrowX+=190
-        if key=='up':
-            if app.movesArrowY != 380:
-                app.movesArrowY-=50
-        if key=='down':
-            if app.movesArrowY != 380+50:
-                app.movesArrowY+=50
-        if key=='z':
-            app.battleMain=True
-            app.battleMoves=False
-            app.battleArrowX=387
-            app.battleArrowY=385
-        if key=='x':
-            if app.movesSelected!=None:
-                if app.player.pokemon[0].speed >= app.opponent.pokemon[0].speed:
-                    app.resultList=[f"{(app.player.pokemon[0].nickname.upper())} used {app.movesSelected[0].name.upper()} "]
-                    app.player.pokemon[0].damage(app, app.movesSelected[0], app.opponent.pokemon[0])
-                    if app.opponent.pokemon[0].hp>0:
-                        app.opponentMove=None
-                        app.opponentMovesOptions=[]
-                        for moves in app.opponent.pokemon[0].moves:
-                            if moves == None:
-                                continue
-                            if effective(moves[0], app.player.pokemon[0]) == 2:
-                                app.opponentMove=moves[0]
-                            elif effective(moves[0], app.player.pokemon[0]) == 1:
-                                app.opponentMovesOptions.append(moves[0])
-                        if app.opponentMove == None and len(app.opponentMovesOptions)!=1:
-                            app.opponentMove=app.opponentMovesOptions[random.randrange(0, len(app.opponentMovesOptions)-1)]
-                        elif app.opponentMove == None and len(app.opponentMovesOptions) == 1:
-                            app.opponentMove=app.opponentMovesOptions[0]
-                        app.resultList.append(f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMove.name.upper()} ")
-                        app.opponent.pokemon[0].damage(app, app.opponentMove, app.player.pokemon[0])
-                    else: 
-                        app.resultList.append(f"{(app.opponent.pokemon[0].nickname.upper())} fainted!")
-                        if len(app.opponent.pokemon)>1:
-                            app.resultList.append(f"Opponent sent out {(app.opponent.pokemon[1].nickname.upper())}")
-                elif app.player.pokemon[0].speed < app.opponent.pokemon[0].speed:
-                        app.opponentMoves=None
-                        app.opponentMovesOptions=[]
-                        for moves in app.opponent.pokemon[0].moves:
-                            if effective(moves, app.player.pokemon[0]) == 2:
-                                app.opponentMoves=moves
-                            elif effective(moves, app.player.pokemon[0]) == 1:
-                                app.opponentMovesOptions.append[moves]
-                        if app.opponentMove==None:
-                            app.opponentMove=app.opponentMovesOptions[random.randrange(0, len(app.opponentMovesOptions)-1)]
-                        app.resultList=[f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMoves.name.upper()} "]    
-                        app.opponent.pokemon[0].damage(app, app.movesSelected, app.player.pokemon[0])
-                        if app.player.pokemon[0].hp>0:
-                            app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} used {app.movesSelected[0].name.upper()} ")
-                            app.player.pokemon[0].damage(app, app.movesSelected, app.opponent.pokemon[0])
-                        else:
-                            app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} fainted!")
-                app.battleMain=False
-                app.battleMoves=False
-                app.battleResults=True
-    
-    elif app.battleResults==True:
-        if key=='x' or key=='z':
-            app.resultList.pop(0)
-            if len(app.resultList)==0:
-                if app.opponent.pokemon[0].hp<=0:
-                    app.opponent.pokemon.pop(0)
-                if app.player.pokemon[0].hp<=0:
-                    app.player.pokemon.pop(0)
-                if len(app.opponent.pokemon)==0:
-                    app.Win=True
-                if len(app.player.pokemon)==0:
-                    app.Lose=True
+    if app.battle==True:
+        if app.battleMain==True:
+            if key=='left':
+                if app.battleArrowX != 387:
+                    app.battleArrowX-=170
+            if key=='right':
+                if app.battleArrowX != 557:
+                    app.battleArrowX+=170
+            if key=='up':
+                if app.battleArrowY != 385:
+                    app.battleArrowY-=50
+            if key=='down':
+                if app.battleArrowY != 435:
+                    app.battleArrowY+=50
+            if key=='x':
+                if app.battleArrowX==387 and app.battleArrowY == 385:
+                    app.battleMain=False
+                    app.battleMoves=True
+                    app.movesSelected=None
+                    app.movesArrowX = 50
+                    app.movesArrowY =380
+                
+        elif app.battleMoves==True:
+            if key=='left':
+                if app.movesArrowX != 50:
+                    app.movesArrowX-=190
+            if key=='right':
+                if app.movesArrowX != (50+190):
+                    app.movesArrowX+=190
+            if key=='up':
+                if app.movesArrowY != 380:
+                    app.movesArrowY-=50
+            if key=='down':
+                if app.movesArrowY != 380+50:
+                    app.movesArrowY+=50
+            if key=='z':
                 app.battleMain=True
                 app.battleMoves=False
-                app.battleResults=False
+                app.battleArrowX=387
+                app.battleArrowY=385
+            if key=='x':
+                if app.movesSelected!=None:
+                    if app.player.pokemon[0].speed >= app.opponent.pokemon[0].speed:
+                        app.resultList=[f"{(app.player.pokemon[0].nickname.upper())} used {app.movesSelected[0].name.upper()} "]
+                        app.player.pokemon[0].damage(app, app.movesSelected[0], app.opponent.pokemon[0])
+                        if app.opponent.pokemon[0].hp>0:
+                            app.opponentMove=None
+                            app.opponentMovesOptions=[]
+                            for moves in app.opponent.pokemon[0].moves:
+                                if moves == None:
+                                    continue
+                                if effective(moves[0], app.player.pokemon[0]) == 2:
+                                    app.opponentMove=moves[0]
+                                elif effective(moves[0], app.player.pokemon[0]) == 1:
+                                    app.opponentMovesOptions.append(moves[0])
+                            if app.opponentMove == None and len(app.opponentMovesOptions)!=1:
+                                app.opponentMove=app.opponentMovesOptions[random.randrange(0, len(app.opponentMovesOptions)-1)]
+                            elif app.opponentMove == None and len(app.opponentMovesOptions) == 1:
+                                app.opponentMove=app.opponentMovesOptions[0]
+                            app.resultList.append(f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMove.name.upper()} ")
+                            app.opponent.pokemon[0].damage(app, app.opponentMove, app.player.pokemon[0])
+                        else: 
+                            app.resultList.append(f"{(app.opponent.pokemon[0].nickname.upper())} fainted!")
+                            if len(app.opponent.pokemon)>1:
+                                app.resultList.append(f"Opponent sent out {(app.opponent.pokemon[1].nickname.upper())}")
+                    elif app.player.pokemon[0].speed < app.opponent.pokemon[0].speed:
+                            app.opponentMoves=None
+                            app.opponentMovesOptions=[]
+                            for moves in app.opponent.pokemon[0].moves:
+                                if effective(moves, app.player.pokemon[0]) == 2:
+                                    app.opponentMoves=moves
+                                elif effective(moves, app.player.pokemon[0]) == 1:
+                                    app.opponentMovesOptions.append[moves]
+                            if app.opponentMove==None:
+                                app.opponentMove=app.opponentMovesOptions[random.randrange(0, len(app.opponentMovesOptions)-1)]
+                            app.resultList=[f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMoves.name.upper()} "]    
+                            app.opponent.pokemon[0].damage(app, app.movesSelected, app.player.pokemon[0])
+                            if app.player.pokemon[0].hp>0:
+                                app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} used {app.movesSelected[0].name.upper()} ")
+                                app.player.pokemon[0].damage(app, app.movesSelected, app.opponent.pokemon[0])
+                            else:
+                                app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} fainted!")
+                    app.battleMain=False
+                    app.battleMoves=False
+                    app.battleResults=True
+        
+        elif app.battleResults==True:
+            if key=='x' or key=='z':
+                app.resultList.pop(0)
+                if len(app.resultList)==0:
+                    if app.opponent.pokemon[0].hp<=0:
+                        app.opponent.pokemon.pop(0)
+                    if app.player.pokemon[0].hp<=0:
+                        app.player.pokemon.pop(0)
+                    if len(app.opponent.pokemon)==0:
+                        app.Win=True
+                    if len(app.player.pokemon)==0:
+                        app.Lose=True
+                    app.battleMain=True
+                    app.battleMoves=False
+                    app.battleResults=False
+    elif app.start==True:
+        if key=='enter':
+            app.start=False
+            app.start1=True
+    elif app.start1==True:
+        if key=='up':
+            app.gender+=1
+        if key=="down":
+            app.gender-=1
+        if key=="enter" or key=='x':
+            if app.gender%2==0:
+                app.gender='Male'
+            elif app.gender%2==1:
+                app.gender="Female"
+            app.start1=False
+            app.start2=True
+    elif app.start2==True:
+        if key.isaplha
 
 def onStep(app):
-    if app.battleMoves==True:
-        if app.movesArrowX==50 and app.movesArrowY==380:
-            app.movesSelected=app.player.pokemon[0].moves[0]
-        elif app.movesArrowX==240 and app.movesArrowY==380:
-            app.movesSelected=app.player.pokemon[0].moves[1]
-        elif app.movesArrowX==50 and app.movesArrowY==430:
-            app.movesSelected=app.player.pokemon[0].moves[2]
-        elif app.movesArrowX==240 and app.movesArrowY==430:
-            app.movesSelected=app.player.pokemon[0].moves[3]
+    if app.battle==True:
+        if app.battleMoves==True:
+            if app.movesArrowX==50 and app.movesArrowY==380:
+                app.movesSelected=app.player.pokemon[0].moves[0]
+            elif app.movesArrowX==240 and app.movesArrowY==380:
+                app.movesSelected=app.player.pokemon[0].moves[1]
+            elif app.movesArrowX==50 and app.movesArrowY==430:
+                app.movesSelected=app.player.pokemon[0].moves[2]
+            elif app.movesArrowX==240 and app.movesArrowY==430:
+                app.movesSelected=app.player.pokemon[0].moves[3]
 
 
 class Pokemon:
