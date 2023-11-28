@@ -9,13 +9,22 @@ def onAppStart(app):
     app.width=720
     app.height=480
     movesList(app)
-    trainers(app)
     app.start=True
     app.start1=False
     app.start2=False
     app.battle=False
+    app.Truck=False
+    app.starter=False
     app.gender=0
-    app.name=None
+    app.name=''
+    app.east=CMUImage(Image.open('Right.png'))
+    app.west=CMUImage(Image.open('Left.png'))
+    app.north=CMUImage(Image.open('Up.png'))
+    app.south=CMUImage(Image.open('Down.png'))
+    app.playerx=0
+    app.playery=0
+    app.direction=app.east
+    app.mystarter=0
 
 def Start(app):
     introBackground=CMUImage(Image.open('Intro.png'))
@@ -39,8 +48,24 @@ def Start2(app):
         girl=CMUImage(Image.open('girl1.png'))
         drawImage(girl, app.width/2,app.height/2,height=app.height, width= app.width+45,align='center')
     drawRect(25, 150, 300, 75, fill='white', border='green', borderWidth=10)
-    if app.name!=None:
-        drawLabel(app.name,25, 150, align='Top-Left')
+    drawLabel(app.name,40, 175, align='top-left', size=30)
+
+def Truck(app):
+    truck=CMUImage(Image.open('Truck.jpg'))
+    drawRect(0,0, app.width, app.height, fill='black')
+    drawImage(truck, app.width/2,app.height/2, width=80*2,height=72*2 ,align='center')
+    drawImage(app.direction, app.playerx, app.playery, width=18*2, height=23*2)
+    
+def Starter(app):
+    mudkip=CMUImage(Image.open('Mudkip.png'))
+    torchic=CMUImage(Image.open('Torchic.png'))
+    treecko=CMUImage(Image.open('Treecko.png'))
+    if app.mystarter%3==0:
+        drawImage(torchic, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
+    if app.mystarter%3==1:
+        drawImage(mudkip, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
+    if app.mystarter%3==2:
+        drawImage(treecko, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
 
 
 def Battle(app):
@@ -48,7 +73,7 @@ def Battle(app):
     player(app)
     app.Win=False
     app.Lose=False
-    app.opponent=app.fisherman1
+    app.opponent=app.Rival1
     app.battleArrowX=387
     app.battleArrowY=385
     app.movesArrowX=50
@@ -62,9 +87,8 @@ def Battle(app):
     app.battleResults=False
 
 def player(app):
-    app.player=Player('Night')
-    pokemon1=Pokemon('treecko', 5, [app.VineWhip, app.AerialAce, app.Tackle, None])
-    app.player.addPokemon(pokemon1)
+    app.player=Player(app.name)
+    app.player.addPokemon(app.mystarter)
 
 def movesList(app):
     app.Tackle=Moves("Tackle", 35, 40, 100, "Normal", True),
@@ -85,14 +109,12 @@ def movesList(app):
     Moves("Fire Blast", 5, 110, 85, "Fire", True)
 
 def trainers(app):
-    fisherman1(app)
+    Rival1(app)
 
-def fisherman1(app):
-    app.fisherman1=Trainer('Fisherman')
-    pokemon1=Pokemon('mudkip', 5, [app.WaterGun, app.Tackle, None, None])
-    pokemon2=Pokemon('torchic', 5, [app.Ember, app.Tackle, None, None])
-    app.fisherman1.addPokemon(pokemon1)
-    app.fisherman1.addPokemon(pokemon2)
+def Rival1(app):
+    app.Rival1=Trainer('Rival')
+    app.Rival1.addPokemon(app.RivalStarter)
+
 
 def redrawAll(app):
     if app.battle==True:
@@ -103,6 +125,10 @@ def redrawAll(app):
         Start1(app)
     if app.start2==True:
         Start2(app)
+    if app.Truck==True:
+        Truck(app)
+    if app.starter==True:
+        Starter(app)
 
 def battleBackground(app):
     if app.Lose==False and app.Win==False:
@@ -179,10 +205,10 @@ def battleBackground(app):
             drawLabel(app.resultList[0], 35, 390, size=35, fill='white',align='top-left')
     if app.Win==True:
         drawRect(0,0, app.width, app.height, fill='black')
-        drawLabel("YOU WON", app.width/2, app.height/2, size=40, fill='White')
+        drawLabel(f"{app.name} WON", app.width/2, app.height/2, size=40, fill='White')
     if app.Lose==True:
         drawRect(0,0, app.width, app.height, fill='black')
-        drawLabel("You Blackout", app.width/2, app.height/2, size=40, fill='White')
+        drawLabel(f"{app.name} Blackout", app.width/2, app.height/2, size=40, fill='White')
 
 
 def onKeyPress(app, key):
@@ -304,8 +330,69 @@ def onKeyPress(app, key):
             app.start1=False
             app.start2=True
     elif app.start2==True:
-        if key.isaplha
+        if (key.isalpha() or key.isdigit() )and len(key)==1 and len(app.name)<=10:
+            app.name+=key.upper()
+        elif key=='backspace':
+            if app.name!='':
+                app.name=app.name[:-1]
+        elif key=="enter":
+            if app.name!='':
+                app.start2=False
+                app.Truck=True
+                app.playerx=325
+                app.playery=200
+    elif app.Truck==True:
+        if key=='left':
+            if app.direction!=app.west:
+                app.direction=app.west
+            else:
+                if app.playerx>311:
+                    app.playerx-=5
+        if key=='right':
+            if app.direction!=app.east:
+                app.direction=app.east
+            else:
+                if app.playerx<400:
+                    app.playerx+=5
+                if app.playerx>=400:
+                    app.Truck=False
+                    app.starter=True
+    elif app.starter==True:
+        if key=='right':
+            app.mystarter+=1
+        if key=='left':
+            app.mystarter-=1
+        if key=='x':
+            if app.mystarter%3==0:
+                app.mystarter=Pokemon('torchic', 5, [app.Ember, app.Tackle, None, None])
+                app.RivalStarter=Pokemon('mudkip', 5, [None, app.Tackle, None, None])
+            elif app.mystarter%3==1:
+                app.mystarter=Pokemon('mudkip', 5, [app.WaterGun, app.Tackle, None, None])
+                app.RivalStarter=Pokemon('treecko', 5, [None, app.Tackle, None, None])
+            elif app.mystarter%3==2:
+                app.mystarter=Pokemon('treecko', 5, [app.VineWhip, app.Tackle, None, None])
+                app.RivalStarter=Pokemon('torchic', 5, [None, app.Tackle, None, None])
+            app.starter=False
+            app.battle=True
+            Battle(app)
+    
+def onMousePress(app, mouseX, mouseY):
+    print(mouseX, mouseY)
 
+def onKeyHold(app, keys):
+    if app.Truck==True:
+        if 'left' in keys:
+            if app.playerx>311:
+                app.playerx-=5
+        if 'right' in keys:
+            if app.playerx<400:
+                    app.playerx+=5
+            if app.playerx>=400:
+                app.Truck=False
+                app.starter=True
+        
+
+        
 def onStep(app):
     if app.battle==True:
         if app.battleMoves==True:
