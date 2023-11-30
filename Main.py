@@ -8,7 +8,6 @@ import random
 def onAppStart(app):
     app.width=720
     app.height=480
-    movesList(app)
     app.start=True
     app.start1=False
     app.start2=False
@@ -17,14 +16,19 @@ def onAppStart(app):
     app.starter=False
     app.gender=0
     app.name=''
-    app.east=CMUImage(Image.open('Right.png'))
-    app.west=CMUImage(Image.open('Left.png'))
-    app.north=CMUImage(Image.open('Up.png'))
-    app.south=CMUImage(Image.open('Down.png'))
     app.playerx=0
     app.playery=0
-    app.direction=app.east
     app.mystarter=0
+    app.overworld=False
+    app.overworldX=-2900
+    app.overworldY=-2300
+    app.dy=0
+    app.dx=0
+    app.Overworldplayerx=50
+    app.Overworldplayery=app.height/2
+    movesList(app)
+    trainers(app)
+    images(app)
 
 def Start(app):
     introBackground=CMUImage(Image.open('Intro.png'))
@@ -32,13 +36,19 @@ def Start(app):
     drawLabel('Pokemon 112', app.width/2, 200,align='center',size=75, fill='Green' , font='orbitron')
     drawLabel('Press Enter to Start', app.width/2, 285, align='center',size=30, fill='White' , font='orbitron')
 
+def images(app):
+    app.map=CMUImage(Image.open('Map.jpg'))
+    app.professor=CMUImage(Image.open('Professor.png'))
+    app.girl=CMUImage(Image.open('girl.png'))
+    app.boy=CMUImage(Image.open('boy.png'))
+    app.truck=CMUImage(Image.open('Truck.jpg'))
+    app.wally=CMUImage(Image.open('WallyFront.png'))
+
 def Start1(app):
-    girl=CMUImage(Image.open('girl.png'))
-    boy=CMUImage(Image.open('boy.png'))
     if app.gender%2==0:
-        drawImage(boy, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
+        drawImage(app.boy, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
     if app.gender%2==1:
-        drawImage(girl, app.width/2,app.height/2,height=app.height, width= app.width+45,align='center')
+        drawImage(app.girl, app.width/2,app.height/2,height=app.height, width= app.width+45,align='center')
 
 def Start2(app):
     if app.gender=="Male":
@@ -51,11 +61,19 @@ def Start2(app):
     drawLabel(app.name,40, 175, align='top-left', size=30)
 
 def Truck(app):
-    truck=CMUImage(Image.open('Truck.jpg'))
+    
     drawRect(0,0, app.width, app.height, fill='black')
-    drawImage(truck, app.width/2,app.height/2, width=80*2,height=72*2 ,align='center')
+    drawImage(app.truck, app.width/2,app.height/2, width=80*2,height=72*2 ,align='center')
     drawImage(app.direction, app.playerx, app.playery, width=18*2, height=23*2)
     
+def Overworld(app):
+    drawImage(app.map, app.overworldX, app.overworldY, width=2*2353, height=2*1579)
+    if type(app.mystarter)==int:
+        drawImage(app.professor, 100, -350+app.dy,width=20*2, height=25*2)
+    else:
+        drawImage(app.wally,200, -350+app.dy,width=20*2, height=25*2)
+    drawImage(app.direction,app.Overworldplayerx, app.Overworldplayery, width=20*2, height=25*2)
+
 def Starter(app):
     mudkip=CMUImage(Image.open('Mudkip.png'))
     torchic=CMUImage(Image.open('Torchic.png'))
@@ -67,13 +85,11 @@ def Starter(app):
     if app.mystarter%3==2:
         drawImage(treecko, app.width/2,app.height/2,height=app.height, width=app.width+45,align='center')
 
-
-def Battle(app):
-    trainers(app)
+def Battle(app, opponent):
     player(app)
     app.Win=False
     app.Lose=False
-    app.opponent=app.Rival1
+    app.opponent=opponent
     app.battleArrowX=387
     app.battleArrowY=385
     app.movesArrowX=50
@@ -109,7 +125,7 @@ def movesList(app):
     Moves("Fire Blast", 5, 110, 85, "Fire", True)
 
 def trainers(app):
-    Rival1(app)
+    pass
 
 def Rival1(app):
     app.Rival1=Trainer('Rival')
@@ -129,6 +145,8 @@ def redrawAll(app):
         Truck(app)
     if app.starter==True:
         Starter(app)
+    if app.overworld==True:
+        Overworld(app)
 
 def battleBackground(app):
     if app.Lose==False and app.Win==False:
@@ -278,20 +296,25 @@ def onKeyPress(app, key):
                             if len(app.opponent.pokemon)>1:
                                 app.resultList.append(f"Opponent sent out {(app.opponent.pokemon[1].nickname.upper())}")
                     elif app.player.pokemon[0].speed < app.opponent.pokemon[0].speed:
-                            app.opponentMoves=None
+                        if app.opponent.pokemon[0].hp>0:
+                            app.opponentMove=None
                             app.opponentMovesOptions=[]
                             for moves in app.opponent.pokemon[0].moves:
-                                if effective(moves, app.player.pokemon[0]) == 2:
-                                    app.opponentMoves=moves
-                                elif effective(moves, app.player.pokemon[0]) == 1:
-                                    app.opponentMovesOptions.append[moves]
-                            if app.opponentMove==None:
+                                if moves == None:
+                                    continue
+                                if effective(moves[0], app.player.pokemon[0]) == 2:
+                                    app.opponentMove=moves[0]
+                                elif effective(moves[0], app.player.pokemon[0]) == 1:
+                                    app.opponentMovesOptions.append(moves[0])
+                            if app.opponentMove == None and len(app.opponentMovesOptions)!=1:
                                 app.opponentMove=app.opponentMovesOptions[random.randrange(0, len(app.opponentMovesOptions)-1)]
-                            app.resultList=[f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMoves.name.upper()} "]    
-                            app.opponent.pokemon[0].damage(app, app.movesSelected, app.player.pokemon[0])
+                            elif app.opponentMove == None and len(app.opponentMovesOptions) == 1:
+                                app.opponentMove=app.opponentMovesOptions[0]
+                            app.resultList=[(f"{(app.opponent.pokemon[0].nickname.upper())} used {app.opponentMove.name.upper()} ")]
+                            app.opponent.pokemon[0].damage(app, app.opponentMove, app.player.pokemon[0])
                             if app.player.pokemon[0].hp>0:
                                 app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} used {app.movesSelected[0].name.upper()} ")
-                                app.player.pokemon[0].damage(app, app.movesSelected, app.opponent.pokemon[0])
+                                app.player.pokemon[0].damage(app, app.movesSelected[0], app.opponent.pokemon[0])
                             else:
                                 app.resultList.append(f"{(app.player.pokemon[0].nickname.upper())} fainted!")
                     app.battleMain=False
@@ -325,8 +348,22 @@ def onKeyPress(app, key):
         if key=="enter" or key=='x':
             if app.gender%2==0:
                 app.gender='Male'
+                app.east=CMUImage(Image.open('Right.png'))
+                app.west=CMUImage(Image.open('Left.png'))
+                app.north=CMUImage(Image.open('Up.png'))
+                app.south=CMUImage(Image.open('Down.png'))
+                app.walkingeast=CMUImage(Image.open('BoyWalkRight.png'))
+                app.walkingwest=CMUImage(Image.open('BoyWalkLeft.png'))
+                app.walkingnorth=CMUImage(Image.open('BoyWalkUp.png'))
+                app.walkingsouth=CMUImage(Image.open('BoyWalkDown.png'))
+                app.direction=app.east
             elif app.gender%2==1:
                 app.gender="Female"
+                app.east=CMUImage(Image.open('GirlRight.png'))
+                app.west=CMUImage(Image.open('GirlLeft.png'))
+                app.north=CMUImage(Image.open('GirlUp.png'))
+                app.south=CMUImage(Image.open('GirlDown.png'))
+                app.direction=app.east
             app.start1=False
             app.start2=True
     elif app.start2==True:
@@ -356,8 +393,9 @@ def onKeyPress(app, key):
                     app.playerx+=5
                 if app.playerx>=400:
                     app.Truck=False
-                    app.starter=True
+                    app.overworld=True
     elif app.starter==True:
+        print(app.mystarter)
         if key=='right':
             app.mystarter+=1
         if key=='left':
@@ -373,26 +411,79 @@ def onKeyPress(app, key):
                 app.mystarter=Pokemon('treecko', 5, [app.VineWhip, app.Tackle, None, None])
                 app.RivalStarter=Pokemon('torchic', 5, [None, app.Tackle, None, None])
             app.starter=False
-            app.battle=True
-            Battle(app)
-    
+            app.overworld=True
+    elif app.overworld==True:
+        if key=='left':
+            if app.direction!=app.west:
+                app.direction=app.west
+            else:
+                app.Overworldplayerx-=5
+        elif key=='right':
+            if app.direction!=app.east:
+                app.direction=app.east
+            else:
+                app.Overworldplayerx+=5
+        elif key=='up':
+            if app.direction!=app.north:
+                app.direction=app.north
+            else:
+                app.overworldY-=5
+                app.dy-=5
+        elif key=='down ':
+            if app.direction!=app.south:
+                app.direction=app.south
+            else:
+                app.overworldY+=5
+                app.dy+=5
+
 def onMousePress(app, mouseX, mouseY):
     print(mouseX, mouseY)
 
 def onKeyHold(app, keys):
     if app.Truck==True:
         if 'left' in keys:
+            app.direction=app.walkingwest
             if app.playerx>311:
                 app.playerx-=5
         if 'right' in keys:
+            app.direction=app.walkingeast
             if app.playerx<400:
                     app.playerx+=5
             if app.playerx>=400:
                 app.Truck=False
-                app.starter=True
+                app.overworld=True
+    if app.overworld==True:
+        if 'up' in keys:
+            app.direction=app.walkingnorth
+            app.overworldY+=5
+            app.dy+=5
+        if 'down' in keys:
+            app.direction=app.walkingsouth
+            app.overworldY-=5
+            app.dy-=5
+        if 'left' in keys:
+            app.direction=app.walkingwest
+            app.Overworldplayerx-=5
+        if 'right' in keys:
+            app.direction=app.walkingeast
+            app.Overworldplayerx+=5
         
+def onKeyRelease(app, key):
+    if app.Truck==True:
+        if key=='left':
+            app.direction=app.west
+        if key=='right':
+            app.direction=app.east
+    if app.overworld==True:
+        if key=='left':
+            app.direction=app.west
+        if key=='right':
+            app.direction=app.east
+        if key=='up':
+            app.direction=app.north
+        if key=='down':
+            app.direction=app.south
 
-        
 def onStep(app):
     if app.battle==True:
         if app.battleMoves==True:
@@ -404,6 +495,15 @@ def onStep(app):
                 app.movesSelected=app.player.pokemon[0].moves[2]
             elif app.movesArrowX==240 and app.movesArrowY==430:
                 app.movesSelected=app.player.pokemon[0].moves[3]
+    elif app.overworld==True:
+        if 54<=app.Overworldplayerx<=146 and 450<app.dy<600 and type(app.mystarter)==int:
+            app.overworld=False
+            app.starter=True
+        if 150<=app.Overworldplayerx<=250 and 450<app.dy<600 and type(app.mystarter)!=int:
+            app.overworld=False
+            Rival1(app)
+            Battle(app, app.Rival1)
+            app.battle=True
 
 
 class Pokemon:
